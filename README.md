@@ -2,6 +2,11 @@
 
 A Telegram bot that generates QR codes from text/links and scans QR codes from images. Built with Cloudflare Pages and supports both English and Persian languages.
 
+## Live Demo 🚀
+
+- **Bot Link**: [QR Code Wizard Bot](https://t.me/QRCWizardbot)
+- **Developer Contact**: [BXAMbot](https://t.me/BXAMbot)
+
 ## Features ✨
 
 - Generate QR codes from text or URLs
@@ -11,6 +16,13 @@ A Telegram bot that generates QR codes from text/links and scans QR codes from i
 - No ads or promotional content
 - Fast and reliable performance
 - Built on Cloudflare's global network
+
+## Prerequisites 🧰
+
+- Telegram account
+- Cloudflare account
+- Github
+- Basic understanding of Cloudflare Pages and Telegram Bots
 
 ## Setup 🛠
 
@@ -24,7 +36,7 @@ A Telegram bot that generates QR codes from text/links and scans QR codes from i
    - Sign in to your Cloudflare account
    - Go to Pages section
    - Click "Create a project"
-   - Choose "Connect to Git"
+   - Choose "Connect to Github"
    - Select your forked repository
    - Configure build settings:
      - Framework preset: `None`
@@ -35,7 +47,7 @@ A Telegram bot that generates QR codes from text/links and scans QR codes from i
        - Key: `TELEGRAM_TOKEN`
        - Value: Your Telegram bot token from step 2
 4. After deployment, set up your Telegram webhook:
-   ```
+   ```bash
    https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://<YOUR_PAGES_URL>
    ```
    Replace `<YOUR_BOT_TOKEN>` with your actual bot token and `<YOUR_PAGES_URL>` with your Cloudflare Pages URL
@@ -69,6 +81,24 @@ qr-wizard-bot/
 - Environment variables for secure token management
 - Stateless architecture for reliability
 
+## Limitations ⚠️
+
+- Maximum text length for QR code generation: 850 characters
+- Supports QR code generation and scanning
+- Requires a stable internet connection
+
+## Performance 📊
+
+- Low latency due to Cloudflare's global network
+- Minimal resource consumption
+- Quick QR code generation and scanning
+
+## Security 🔒
+
+- No user data storage
+- Serverless architecture
+- Uses secure, encrypted API connections
+
 ## License 📄
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -100,6 +130,12 @@ If you need help with setup or usage:
 2. Create a new issue for support questions
 3. Be specific about your problem
 4. Include your setup details
+
+## Acknowledgments 🙏
+
+- [Telegram Bot API](https://core.telegram.org/bots/api)
+- [Cloudflare Pages](https://pages.cloudflare.com/)
+- QR Server API
 
 ---
 
