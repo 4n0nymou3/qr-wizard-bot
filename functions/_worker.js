@@ -378,3 +378,16 @@ else if (reqBody.message.photo) {
     });
   }
 }
+
+function escapeMarkdown(text) {
+  return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
+}
+
+function isValidUrl(string) {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
