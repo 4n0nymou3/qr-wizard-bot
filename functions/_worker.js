@@ -99,12 +99,12 @@ export default
 							, content: '❌ *خطا*\n\n' + 'لطفاً یک متن یا لینک معتبر وارد کنید\\.\n\n' + '\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\n\n' + '❌ *Error*\n\n' + 'Please enter a valid text or link\\.'
 						});
 					}
-					else if (message.length > 1000)
+					else if (message.length > 850)
 					{
 						botResponses.push(
 						{
 							type: 'text'
-							, content: '❌ *خطا*\n\n' + 'طول پیام نباید بیشتر از 1000 کاراکتر باشد\\.\n\n' + '\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\n\n' + '❌ *Error*\n\n' + 'Message length should not exceed 1000 characters\\.'
+							, content: '❌ *خطا*\n\n' + 'طول پیام نباید بیشتر از 850 کاراکتر باشد\\.\n\n' + '\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\n\n' + '❌ *Error*\n\n' + 'Message length should not exceed 850 characters\\.'
 						});
 					}
 					else if (message.startsWith('http') && !isValidUrl(message))
