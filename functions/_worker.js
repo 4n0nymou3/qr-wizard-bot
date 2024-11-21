@@ -61,14 +61,11 @@ export default {
             const fileUrl = await getFileUrl(fileId, env.TELEGRAM_TOKEN);
             console.log('File URL:', fileUrl);
             
-            // Get the image data as binary
+            // Get the image data
             const imageResponse = await fetch(fileUrl);
-            const imageBuffer = await imageResponse.arrayBuffer();
+            const imageBlob = await imageResponse.blob();
             
-            // Convert array buffer to base64
-            const base64Image = Buffer.from(imageBuffer).toString('base64');
-            
-            const qrContent = await scanQRCode(base64Image);
+            const qrContent = await scanQRCode(imageBlob);
             console.log('QR Content:', qrContent);
             
             if (qrContent) {
@@ -265,19 +262,19 @@ async function getFileUrl(fileId, token) {
   return fileUrl;
 }
 
-async function scanQRCode(base64Image) {
-  console.log('Scanning QR code from base64 image');
+async function scanQRCode(imageBlob) {
+  console.log('Scanning QR code from blob');
+  
+  const formData = new FormData();
+  formData.append('file', imageBlob, 'qr.png');
   
   const response = await fetch('https://api.qrserver.com/v1/read-qr-code/', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: `base64=${encodeURIComponent(base64Image)}`
+    body: formData
   });
   
   const data = await response.json();
-  console.log('QR scan response:', data);
+  console.log('QR scan response:', JSON.stringify(data, null, 2));
   
   if (!data[0]?.symbol[0]?.data) {
     throw new Error('QR code could not be read');
