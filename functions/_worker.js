@@ -1,13 +1,11 @@
 export default {
   async fetch(request, env) {
-    // Cross-Origin Resource Sharing (CORS) headers
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type'
     };
 
-    // Handle OPTIONS preflight request
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders });
     }
@@ -157,7 +155,6 @@ export default {
   }
 };
 
-// Separate function to send responses to Telegram
 async function sendResponsesToTelegram(botResponses, chatId, token) {
   for (const response of botResponses) {
     const telegramUrl = response.type === 'photo'
