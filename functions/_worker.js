@@ -238,52 +238,143 @@ async function sendResponsesToTelegram(botResponses, chatId, token) {
   }
 }
 
+// Just update these specific functions:
+
 async function getFileUrl(fileId, token) {
   console.log('Getting file URL for fileId:', fileId);
   
-  const response = await fetch(
-    `https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`
-  );
-  
-  const data = await response.json();
-  console.log('getFile response:', data);
-  
-  if (!data.ok) {
-    throw new Error(`Telegram getFile error: ${JSON.stringify(data)}`);
+  try {
+    const getFileResponse = await fetch(
+      `https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    if (!getFileResponse.ok) {
+      const errorData = await getFileResponse.text();
+      console.error('getFile response not ok:', {
+        status: getFileResponse.status,
+        statusText: getFileResponse.statusText,
+        body: errorData
+      });
+      throw new Error(`Failed to get file info: ${getFileResponse.status} ${getFileResponse.statusText}`);
+    }
+
+    const data = await getFileResponse.json();
+    console.log('getFile response data:', JSON.stringify(data, null, 2));
+    
+    if (!data.ok || !data.result || !data.result.file_path) {
+      console.error('Invalid getFile response structure:', data);
+      throw new Error('Invalid file info received from Telegram');
+    }
+    
+    const fileUrl = `https://api.telegram.org/file/bot${token}/${data.result.file_path}`;
+    console.log('Generated file URL:', fileUrl);
+    
+    // Verify the file is accessible
+    const verifyResponse = await fetch(fileUrl, { method: 'HEAD' });
+    if (!verifyResponse.ok) {
+      throw new Error(`File not accessible: ${verifyResponse.status} ${verifyResponse.statusText}`);
+    }
+    
+    return fileUrl;
+  } catch (error) {
+    console.error('Error in getFileUrl:', error);
+    throw new Error(`Failed to get file URL: ${error.message}`);
   }
-  
-  const fileUrl = `https://api.telegram.org/file/bot${token}/${data.result.file_path}`;
-  console.log('Generated file URL:', fileUrl);
-  
-  return fileUrl;
 }
 
 async function scanQRCode(imageUrl) {
-  console.log('Scanning QR code from URL:', imageUrl);
+  console.log('Starting QR code scan from URL:', imageUrl);
   
-  const response = await fetch(
-    `https://api.qrserver.com/v1/read-qr-code/?fileurl=${encodeURIComponent(imageUrl)}`
-  );
-  
-  const data = await response.json();
-  console.log('QR scan response:', data);
-  
-  if (!data[0]?.symbol[0]?.data) {
-    throw new Error('QR code could not be read');
-  }
-  
-  return data[0].symbol[0].data;
-}
-
-function escapeMarkdown(text) {
-  return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
-}
-
-function isValidUrl(string) {
   try {
-    new URL(string);
-    return true;
-  } catch (_) {
-    return false;
+    // First try with the direct API
+    const firstAttemptUrl = `https://api.qrserver.com/v1/read-qr-code/?fileurl=${encodeURIComponent(imageUrl)}`;
+    console.log('Attempting first QR scan with URL:', firstAttemptUrl);
+    
+    const response = await fetch(firstAttemptUrl);
+    
+    if (!response.ok) {
+      console.error('First QR scan attempt failed:', {
+        status: response.status,
+        statusText: response.statusText
+      });
+      throw new Error('Failed to scan QR code');
+    }
+
+    const data = await response.json();
+    console.log('QR scan API response:', JSON.stringify(data, null, 2));
+    
+    // Check if we got valid data
+    if (!Array.isArray(data) || !data[0] || !data[0].symbol || !data[0].symbol[0]) {
+      console.error('Invalid QR scan response structure:', data);
+      throw new Error('Invalid QR scan response');
+    }
+
+    const qrData = data[0].symbol[0].data;
+    
+    if (!qrData || qrData === 'NULL' || qrData === '') {
+      console.error('No QR code data found in response');
+      throw new Error('No QR code found in image');
+    }
+
+    console.log('Successfully scanned QR code. Content:', qrData);
+    return qrData;
+
+  } catch (error) {
+    console.error('Error in scanQRCode:', error);
+    throw new Error('Failed to read QR code from image. Please make sure the image contains a clear and valid QR code.');
+  }
+}
+
+// Update the photo handling section in the main handler
+// Find this section in the main code:
+else if (reqBody.message.photo) {
+  console.log('Processing photo message');
+  try {
+    // Get the highest resolution photo
+    const photos = reqBody.message.photo;
+    console.log('Available photos:', JSON.stringify(photos, null, 2));
+    
+    const fileId = photos[photos.length - 1].file_id;
+    console.log('Selected fileId:', fileId);
+    
+    const fileUrl = await getFileUrl(fileId, env.TELEGRAM_TOKEN);
+    console.log('Retrieved fileUrl:', fileUrl);
+    
+    const qrContent = await scanQRCode(fileUrl);
+    console.log('Scanned QR content:', qrContent);
+    
+    if (qrContent) {
+      const escapedContent = escapeMarkdown(qrContent);
+      botResponses.push({
+        type: 'text',
+        content: '🔍 *بارکد خوان*\n\n' +
+                'محتوای تصویر QR کد اسکن شده:\\:\n\n' +
+                '\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\n\n' +
+                '🔍 *QR Code Scanner*\n\n' +
+                'Scanned QR code content:\\:'
+      });
+      botResponses.push({
+        type: 'text',
+        content: `\`${escapedContent}\``
+      });
+    } else {
+      throw new Error('QR code content is empty');
+    }
+  } catch (error) {
+    console.error('Error processing photo:', error);
+    botResponses.push({
+      type: 'text',
+      content: '❌ *خطا*\n\n' +
+              'نمی‌توانم محتوای تصویر QR کد را بخوانم\\. لطفاً مطمئن شوید که تصویر شامل یک QR کد معتبر و خوانا است\\.\n\n' +
+              '\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\\-\n\n' +
+              '❌ *Error*\n\n' +
+              'I cannot read the QR code content\\. Please make sure the image contains a valid and readable QR code\\.'
+    });
   }
 }
