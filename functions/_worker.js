@@ -1,19 +1,22 @@
 export default {
   async fetch(request, env) {
+    // CORS Headers
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type'
     };
 
+    // Handle OPTIONS preflight request
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders });
     }
 
+    // Check for POST request
     if (request.method !== 'POST') {
-      return new Response('Method Not Allowed', { 
-        status: 405, 
-        headers: corsHeaders 
+      return new Response('Method Not Allowed', {
+        status: 405,
+        headers: corsHeaders
       });
     }
 
@@ -22,13 +25,14 @@ export default {
       const chatId = reqBody.message?.chat?.id;
       const text = reqBody.message?.text;
 
-      if (!chatId) {
-        return new Response('Invalid request: missing chatId', { 
+      if (!chatId || !text) {
+        return new Response('Invalid request: missing chatId or text', {
           status: 400,
-          headers: corsHeaders 
+          headers: corsHeaders
         });
       }
 
+      // Prepare responses based on text
       let botResponses = [];
 
       if (text === '/start') {
@@ -51,7 +55,7 @@ export default {
           const fileId = reqBody.message.photo[reqBody.message.photo.length - 1].file_id;
           const fileUrl = await getFileUrl(fileId, env.TELEGRAM_TOKEN);
           const qrContent = await scanQRCode(fileUrl);
-          
+
           if (qrContent) {
             const escapedContent = escapeMarkdown(qrContent);
             botResponses.push({
@@ -79,7 +83,7 @@ export default {
                      'I cannot read the QR code content. Please make sure the image contains a valid and readable QR code.'
           });
         }
-      } else if (text) {
+      } else {
         if (text.trim() === '') {
           botResponses.push({
             type: 'text',
@@ -98,24 +102,15 @@ export default {
                      '❌ *Error*\n\n' +
                      'Message length should not exceed 4000 characters.'
           });
-        } else if (text.startsWith('http') && !isValidUrl(text)) {
-          botResponses.push({
-            type: 'text',
-            content: '❌ *خطا*\n\n' +
-                     'لطفاً یک آدرس اینترنتی معتبر وارد کنید.\n\n' +
-                     '--------------------------------\n\n' +
-                     '❌ *Error*\n\n' +
-                     'Please enter a valid URL.'
-          });
         } else {
           try {
             const QR_COLOR = '262626';
             const QR_BG_COLOR = 'D9D9D9';
             const QR_SIZE = 400;
             const QR_MARGIN = 10;
-            
+
             const photoUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${QR_SIZE}x${QR_SIZE}&data=${encodeURIComponent(text)}&color=${QR_COLOR}&bgcolor=${QR_BG_COLOR}&margin=${QR_MARGIN}&format=png&qzone=2`;
-            
+
             botResponses.push({
               type: 'photo',
               content: photoUrl,
@@ -140,16 +135,16 @@ export default {
 
       await sendResponsesToTelegram(botResponses, chatId, env.TELEGRAM_TOKEN);
 
-      return new Response('OK', { 
+      return new Response('OK', {
         status: 200,
-        headers: corsHeaders 
+        headers: corsHeaders
       });
 
     } catch (error) {
       console.error('Error processing request:', error);
-      return new Response('Internal Server Error', { 
+      return new Response('Internal Server Error', {
         status: 500,
-        headers: corsHeaders 
+        headers: corsHeaders
       });
     }
   }
